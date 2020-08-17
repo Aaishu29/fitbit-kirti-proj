@@ -35,6 +35,7 @@ Kirti Sundar Sahu - kirti.sahu@uwaterloo.ca, Phone: 519 888-4567 x31372
 With full knowledge of all foregoing, I agree, of my own free will, to participate in the study.
 	</pre>
 <button onclick="myFunction()">Agree</button>
+<button id = "myButton" onclick="myFunction1()">Disagree</button>
 <div id="myDIV" style="display:none">
 	<a href="/fitbit">
 Login to Fitbit
@@ -49,6 +50,9 @@ Login to Fitbit
 	    x.style.display = "none";
 	  }
 	}
+	document.getElementById("myButton").onclick = function () {
+        location.href = "/thankyou";
+    };
 </script>
 <script src="app.js"></script>
 </body>
