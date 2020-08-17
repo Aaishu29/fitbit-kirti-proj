@@ -9,7 +9,7 @@ var app     = express();
 var config  = require( './config/app.json' );
 var fs      = require( 'fs' );
 var Fitbit  = require( 'fitbit-oauth2' );
-const port = process.env.PORT(4000)
+const port = process.env.PORT || 4000;
 const path = require('path')
 
 app.get('/', (req, res) => res.sendFile(path.join(__dirname + '/main.html')));
