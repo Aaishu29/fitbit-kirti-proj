@@ -1,20 +1,77 @@
-const MongoClient = require('mongodb').MongoClient;
-const assert = require('assert');
-// The MongoDB Node.js 3.0 driver requires encoding special characters in the Cosmos DB password. 
-//const password = encodeURIComponent('C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==');
-const url = `mongodb://ubilab:m3o77TDQPWyHYMJlx9vG64fd9qxjRANkzBrrsXSkCG3I1WYV9JVRi6ENuTpEQzA0xd62NUmHnSRZcU5Kmum4sA==@ubilab.mongo.cosmos.azure.com:10255/?ssl=true&replicaSet=globaldb&retrywrites=false&maxIdleTimeMS=120000&appName=@ubilab@`;
-const dbname = "fitbitdb";
 var express = require('express');
 var app     = express();
 var config  = require( './config/app.json' );
 var fs      = require( 'fs' );
+
 var Fitbit  = require( 'fitbit-oauth2' );
 const port = process.env.PORT || 4000;
 const path = require('path')
 
+
+function connection_on(token){
+	const { Connection, Request } = require("tedious");
+
+	// Create connection to database
+	const config1 = {
+	  authentication: {
+	    options: {
+	      userName: "ubilab", // update me
+	      password: "KimVicente01!" // update me
+	    },
+	    type: "default"
+	  },
+	  server: "ubilab-data.database.windows.net", // update me
+	  options: {
+	    database: "fitbit_db", //update me
+	    encrypt: true
+	  }
+	};
+
+	const connection = new Connection(config1);
+
+	
+	connection.on("connect", err => {
+	  if (err) {
+	    console.error(err.message);
+	  } else {
+	    queryDatabase();
+	  }
+	});
+
+	function queryDatabase() {
+	  
+	  access_token = String(token.access_token)
+	  refresh_token = String(token.refresh_token)
+	  expires_in = parseInt(token.expires_in)
+	  expires_at = String(token.expires_at)
+	  scope = String(token.scope)
+	  token_type = String(token.token_type)
+	  user_id = String(token.user_id)
+	  //console.log("INSERT INTO user_credentials VALUES('"+access_token+"','"+refresh_token+"',"+expires_in+",'"+scope+"','"+token_type+"','"+user_id+"','"+expires_at+"')CREATE TABLE user_"+user_id+"(date varchar(255), heartrate varchar(255))")
+
+
+	  // Read all rows from table
+	  const request = new Request(
+	    "INSERT INTO user_credentials(access_token,refresh_token,expires_in,scope,token_type,user_id,expires_at,status) VALUES('"+access_token+"','"+refresh_token+"',"+expires_in+",'"+scope+"','"+token_type+"','"+user_id+"','"+expires_at+"','Consent')",
+	    (err, rowCount) => {
+	      if (err) {
+	      	console.log(err)
+	        console.error(err.message);
+	      } else { 
+	        console.log('${rowCount} row(s) returned');
+	      }
+	    }
+	  );
+
+	  connection.execSql(request);
+	}
+}
+// Attempt to connect and execute queries if connection goes through
+
 app.get('/', (req, res) => res.sendFile(path.join(__dirname + '/main.html')));
 
 
+app.get('/thankyou', (req, res) => res.sendFile(path.join(__dirname + '/thank_you.html')));
 
 // Simple token persist functions.
 //
@@ -34,6 +91,7 @@ var persist = {
     write: function( filename, token, cb ) {
         console.log( 'persisting new token:', JSON.stringify( token ) );
         fs.writeFile( filename, JSON.stringify( token ), cb );
+        connection_on(token)
     }
 };
 
@@ -46,15 +104,6 @@ var fitbit = new Fitbit( config.fitbit );
 app.get('/fitbit', function (req, res) {
     res.redirect( fitbit.authorizeURL() );
 });
-
-
-var insertDocument = function(doc,db, callback) {
-db.collection('Research1').insertOne( doc, function(err, result) {
-    assert.equal(err, null);
-    console.log("Inserted a document into the research collection.");
-    callback();
-});
-};
 
 // Callback service parsing the authorization token and asking for the access token.  This
 // endpoint is refered to in config.fitbit.authorization_uri.redirect_uri.  See example
@@ -69,17 +118,12 @@ app.get('/fitbit_auth_callback', function (req, res, next) {
         persist.write( tfile, token, function( err ) {
             if ( err ) return next( err );
         });
-	    MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true }, function(err, client) {
-            assert.equal(null, err);
-            var db = client.db("fitbitdb");
-                insertDocument(token,db, function() {
-                    console.log("loop entered")
-                    client.close();
-                    console.log("loop closed")
-                    });
-            });
-    }); 
+        
+    });
+    res.sendFile(path.join(__dirname + '/thank_you.html'))
 });
 
 
 app.listen(port);
+
+
