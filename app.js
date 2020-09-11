@@ -89,8 +89,6 @@ var persist = {
         });
     },
     write: function( filename, token, cb ) {
-        console.log( 'persisting new token:', JSON.stringify( token ) );
-        fs.writeFile( filename, JSON.stringify( token ), cb );
         connection_on(token)
     }
 };
