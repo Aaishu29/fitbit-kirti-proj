@@ -184,8 +184,8 @@ function collect_tokens(){
     console.log(res1)
 
 }
-
-app.get('/fitbit_auth_callback', function (req, res, next) {
+app.get('/admin', (req, res) => res.sendFile(path.join(__dirname + '/admin.html')));
+app.get('/collect', function (req, res, next) {
     collect_tokens(function(){
         console.log(r.length)
     })  
