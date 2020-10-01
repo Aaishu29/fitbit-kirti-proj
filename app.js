@@ -281,7 +281,7 @@ function collect_data(){
     console.log(res1)
 
 }
-
+app.get('/admin', (req, res) => res.sendFile(path.join(__dirname + '/admin.html')));
 app.get('/collect', function (req, res, next) {
     collect_data(function(){
         console.log(r.length)
